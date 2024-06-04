@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="{{ default_language }}">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge" />
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% if post %}
+  <title>{{ post.title }} | {{ site_title }}</title>
+  <meta name="description" content="{{ post.title }} | {{ site_title }}">
+  <meta property="og:description" content="{{ post.title }} | {{ site_title }}">
+  <meta property="og:title" content="{{ post.title }}" | {{ site_title }} />
+  {% else %}
+  <title>{{ site_title }}</title>
+  <meta name="description" content="{{ site_description }}">
+  <meta property="og:description" content="{{ site_description }}">
+  <meta property="og:title" content="{{ site_title }}" />
+  {% endif %}
+
+  {% for custom_head in extra.custom_head_attributes %}
+  {{ custom_head }}
+  {% endfor %}
+
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="/img/favicon.ico" />
+  <script defer src="/js/logic.js"></script>
+</head>
+
+<body>
+  {% include "header.html" %}
+  <div id="content">
+    {% block content %}{% endblock content %}
+  </div>
+  {% include "footer.html" %}
+</body>
+
+</html>

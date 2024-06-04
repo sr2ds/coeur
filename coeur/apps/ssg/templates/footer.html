@@ -1,0 +1,15 @@
+<footer>
+  <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 text-center">
+    <p class="text-center text-base leading-6">
+      {% for entry in extra.footer_pages %}
+      {% if loop.index > 1 %} &middot; {% endif %}
+      <a href="{{ entry.url }}">{{ entry.title }}</a>
+      {% endfor %}
+    </p>
+    <div class="mt-4">
+      <p class="text-center text-base leading-6 text-gray-400">
+        Copyright {{ year }} &middot; {{ site_title }}
+      </p>
+    </div>
+  </div>
+</footer>

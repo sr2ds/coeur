@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+  <article class="prose">
+    <img class="container mx-auto text-center post-image" src="{{ post.image }}" alt="{{ post.title }}">
+    <h1>{{ post.title }}</h1>
+    <div id="post-content">
+      {{ post.content | safe }}
+    </div>
+  </article>
+</div>
+
+<style>
+  img.post-image {
+    width: 500px;
+  }
+</style>
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+    },
+    "headline": "{{ post.title }} | {{ site_title }}",
+    "author": {
+      "@type": "Organization",
+      "name": "{{ base_url }}"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "{{ base_url }}",
+    },
+    "description": "{{ post.title }} | {{ site_title }}",
+    "image": "{{ post.image | safe  }}"
+  }
+  </script>
+
+{% endblock %}

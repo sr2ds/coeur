@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "coeur"
+version = "0.0.1"
+description = "Coeur - static site management"
+authors = ["David Silva <srdavidsilva@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+typer = {extras = ["all"], version = "^0.12.3"}
+toml = "^0.10.2"
+sqlalchemy = "^2.0.30"
+jinja2 = "^3.1.4"
+psutil = "^5.9.8"
+mistune = "^3.0.2"
+pyyaml = "^6.0.1"
+htmlmin = "^0.1.12"
+watchdog = "^4.0.1"
+
+[tool.poetry.scripts]
+coeur = "coeur.main:app"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
