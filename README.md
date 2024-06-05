@@ -1,6 +1,6 @@
 # Coeur - static site management
 
-Coeur is being made based on [Typer](https://typer.tiangolo.com/) (Thanks @tiangolo) and will be distributed as normal Python CLI packages, it will be possible to install using `pip` soon.
+Coeur is being made based on [Typer](https://typer.tiangolo.com/) (Thanks @tiangolo).
 
 ## Name explanation
 
@@ -26,6 +26,20 @@ If I were to summarize Coeur in a single sentence, considering the end of the pr
 
 The complete tool for building blogs with over a million posts and hosting them for free.
 
+## How to install
+
+Coeur is a common python package, you can install from pypi:
+
+```sh
+pip install --user blog-coeur
+```
+
+The command to be used is `blog-coeur` and get `help` to start to use:
+
+```sh
+blog-coeur --help
+```
+
 ## SSG Module
 
 The first module of `coeur` is the `ssg` to be possible to build a complete static website from a `sqlite` database and also the base feature to import from markdown to database.
@@ -37,7 +51,7 @@ The first module of `coeur` is the `ssg` to be possible to build a complete stat
 To start your project, you can run the `create` command with your new project name, this command will to create the new folder with the basic stuff to work:
 
 ```sh
-coeur ssg create my-blog
+blog-coeur ssg create my-blog
 ```
 
 #### Development Server
@@ -45,7 +59,7 @@ coeur ssg create my-blog
 To build the blog we need some local server to simplify or life, you can run this command inside of coeur project to use a simple locally server:
 
 ```sh
-coeur ssg server --max-posts=1000 --port=8081
+blog-coeur ssg server --max-posts=1000 --port=8081
 ```
 
 The param `max-posts` will be useful when you post has some much posts, this way the build will be more fast in development time.
@@ -55,7 +69,7 @@ The param `max-posts` will be useful when you post has some much posts, this way
 To build your blog, you can run the `build` command inside the blog directory:
 
 ```sh
-coeur ssg build
+blog-coeur ssg build
 ```
 
 The blog will be generated inside the directory "public".
@@ -67,7 +81,7 @@ If you are using the `Zola Framework` and want to migrate to Coeur, you can impo
 Considering that you are inside the Coeur Blog repository, copy the posts directory here and run the command replacing "./content" for your posts directory.
 
 ```sh
-coeur ssg markdown-to-db "./content"
+blog-coeur ssg markdown-to-db "./content"
 ```
 
 ### SSG Features
@@ -80,6 +94,7 @@ coeur ssg markdown-to-db "./content"
  
  ### TODO List
 
+- [ ] Pipeline to build packages - from each new tag, create the new package on pypi
 - [ ] Custom templates (themes)
     - [ ] Command to export template folder
     - [ ] Documentation about templates
@@ -96,7 +111,7 @@ My initial goal was to be able to build my project without exploding my RAM memo
 It is possible that I can optimize the build time to make it faster, however, it will consume a little more RAM memory. For now it's acceptable.
 
 ### Importing - from Markdown to DB
-Importing 103594 posts from Zola markdowns from command `coeur ssg markdown-to-db ./content`:
+Importing 103594 posts from Zola markdowns from command `blog-coeur ssg markdown-to-db ./content`:
 
 ```sh
 Processed: 103594 | Duration: 00:02:11.162591

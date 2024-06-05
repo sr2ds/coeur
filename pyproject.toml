@@ -1,9 +1,13 @@
 [tool.poetry]
-name = "coeur"
-version = "0.0.1"
+name = "blog-coeur"
+version = "0.0.2"
 description = "Coeur - static site management"
 authors = ["David Silva <srdavidsilva@gmail.com>"]
 readme = "README.md"
+repository = "https://github.com/sr2ds/coeur"
+packages = [
+    { include = "coeur" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -18,7 +22,7 @@ htmlmin = "^0.1.12"
 watchdog = "^4.0.1"
 
 [tool.poetry.scripts]
-coeur = "coeur.main:app"
+blog-coeur = "coeur.main:app"
 
 [build-system]
 requires = ["poetry-core"]
