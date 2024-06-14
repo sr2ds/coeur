@@ -145,12 +145,17 @@ class DatabaseManager:
             posts_dicts.append(post_dict)
         return [Post(**post_dict) for post_dict in posts_dicts]
 
-    def generator_page_posts(self, limit=200):
+    def generator_page_posts(self, limit=200, max_posts_server=None):
         total = self.count_total_posts()
         fetched = 0
         offset = 0
 
+        if max_posts_server and max_posts_server > limit:
+            limit = max_posts_server
+
         while fetched < total:
+            if max_posts_server and fetched > max_posts_server:
+                break
             posts = self._fetch_pagination_mapped(offset=offset, limit=limit)
             fetched += len(posts)
             offset = offset + limit
