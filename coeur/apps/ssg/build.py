@@ -2,7 +2,7 @@ from concurrent.futures import as_completed
 import os
 import shutil
 
-from coeur.apps.ssg.db import get_db_session, Post, ContentFormat
+from coeur.apps.ssg.db import DatabaseManager, Post, ContentFormat
 from coeur.utils import Benchmark, BuildSettings, HttpHandler
 
 import mistune
@@ -33,24 +33,30 @@ class BuildHandler:
         benchmark.info()
 
     def generate_db_paginate_posts(self, max_by_page: int):
+        db = DatabaseManager()
+        total = db.count_total_posts()
+        db.session.close()
         db_page = 0
         has_posts = True
         posts = 0
         counter = 0
+
         if self.max_posts and self.max_posts < max_by_page:
             max_by_page = self.max_posts
         while has_posts:
-            db = get_db_session()
-            posts = db.query(Post).offset(db_page).limit(max_by_page).all()
-            if not len(posts) or (self.max_posts and counter >= self.max_posts):
+            db = DatabaseManager()
+            posts = db.generator_page_posts(page=db_page, limit=max_by_page)
+            if not len(posts):
                 has_posts = False
                 return
-
+            if self.max_posts and counter >= self.max_posts:
+                has_posts = False
+                return
             db_page += max_by_page
 
             yield posts
             counter += len(posts)
-            db.close()
+            db.session.close()
 
     def create_sitemap(
         self,
@@ -63,9 +69,8 @@ class BuildHandler:
         )
 
         sitemaps = []
-        for page, posts_db_page in enumerate(
-            self.generate_db_paginate_posts(max_by_page=30000), start=1
-        ):
+        db = DatabaseManager()
+        for page, posts_db_page in enumerate(db.generator_page_posts(limit=30000), start=1):
             sitemap = self.settings.templates["sitemap"].render({"entries": posts_db_page})
             self.create_file(f"/sitemap{page}.xml", sitemap)
             sitemaps.append(f"<sitemap><loc>{base_url}/sitemap{page}.xml</loc></sitemap>")
@@ -83,14 +88,16 @@ class BuildHandler:
         self,
     ):
         print("Starting Pagination Creation")
-        db = get_db_session()
-        total = db.query(Post).count()
-        db.close()
+        db = DatabaseManager()
+        total = db.count_total_posts()
+        db.session.close()
+        total = 0
 
         for page, posts_db_page in enumerate(
-            self.generate_db_paginate_posts(max_by_page=self.settings.posts_pagination), start=1
+            db.generator_page_posts(limit=self.settings.posts_pagination), start=1
         ):
             navigation = {"current": page}
+            total += page
 
             if page > 1:
                 previous = page - 1
@@ -115,15 +122,13 @@ class BuildHandler:
     def create_posts_from_db(
         self,
     ):
-        db = get_db_session()
-        total = db.query(Post).count()
+        db = DatabaseManager()
+        total = db.session.query(Post).count()
         total_used = self.max_posts if self.max_posts else total
         print(f"Starting Posts Creation - creating {total_used} from {total}")
-        db.close()
+        db.session.close()
 
-        for posts_db_page in self.generate_db_paginate_posts(
-            max_by_page=self.settings.posts_db_pagination
-        ):
+        for posts_db_page in db.generator_page_posts(limit=self.settings.posts_db_pagination):
             for future in as_completed(
                 (
                     self.settings.coeur_thread_ex.submit(self.handle_post, post)

@@ -14,7 +14,7 @@ process = psutil.Process(os.getpid())
 
 class BuildSettings:
     def __init__(self, config_path) -> None:
-        self.database = "db/posts.sqlite"
+        self.database = "db/db1.sqlite"
         self.posts_db_pagination = 10000
         self.posts_pagination = 100
         self.root_folder = self.get_output_folder()

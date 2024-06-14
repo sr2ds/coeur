@@ -40,7 +40,7 @@ class CreateHandler:
             file.close()
 
         engine = create_engine(
-            f"sqlite:///{name}/db/posts.sqlite",
+            f"sqlite:///{name}/db/db1.sqlite",
             connect_args={"check_same_thread": False},
         )
 
