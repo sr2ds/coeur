@@ -40,32 +40,40 @@ class Post(Base):
         return f"{settings.get_base_url()}{self.path}/"
 
 
-class DatabaseManager:
+class ShardingManager:
     MAX_FILE_SIZE_MB = 80
     DB1_NAME = "db1.sqlite"
 
+    @staticmethod
+    def _get_databases():
+        return [filename for filename in os.listdir("db")]
+
+    @staticmethod
+    def _get_posts_table_by_db(db_file):
+        db = os.path.splitext(db_file)[0]
+        return "posts" if db == "db1" else f"{db}.posts"
+
+
+class DatabaseManager:
     def __init__(self):
         engine = create_engine(
-            f"sqlite:///db/{self.DB1_NAME}",
+            f"sqlite:///db/{ShardingManager.DB1_NAME}",
             connect_args={"check_same_thread": False},
         )
         event.listen(engine, "connect", self._attach_databases)
-        self.databases = self._get_databases()
+        self.databases = ShardingManager._get_databases()
         self.Session = sessionmaker(bind=engine)
         self.session = self.Session()
         self.smallest_db = self._get_smallest_db()
         event.listen(self.session, "after_commit", self.handle_db_size_limit)
 
     def _attach_databases(self, dbapi_connection, *args):
-        if databases := self._get_databases():
+        if databases := ShardingManager._get_databases():
             for filename in databases:
-                if filename.endswith(".sqlite") and filename != self.DB1_NAME:
+                if filename.endswith(".sqlite") and filename != ShardingManager.DB1_NAME:
                     dbapi_connection.execute(
                         f"ATTACH DATABASE 'db/{filename}' AS {os.path.splitext(filename)[0]}"
                     )
-
-    def _get_databases(self):
-        return [filename for filename in os.listdir("db")]
 
     def _get_smallest_db(self):
         smallest_db = min(self.databases, key=lambda db: os.path.getsize(f"db/{db}"))
@@ -75,7 +83,7 @@ class DatabaseManager:
         session = self.Session()
         self.smallest_db = self._get_smallest_db()
         file_size = os.path.getsize(f"db/{self.smallest_db}.sqlite")
-        if file_size > self.MAX_FILE_SIZE_MB * 1024 * 1024:
+        if file_size > ShardingManager.MAX_FILE_SIZE_MB * 1024 * 1024:
             filename = f"db{len(self.databases) + 1}.sqlite"
             file_prefix = os.path.splitext(filename)[0]
             session.execute(text(f"ATTACH DATABASE 'db/{filename}' AS {file_prefix}"))
@@ -101,7 +109,7 @@ class DatabaseManager:
     def count_total_posts(self):
         union_query = " UNION ALL ".join(
             [
-                f"SELECT title, content FROM {self._get_posts_table_by_db(filename)}"
+                f"SELECT title, content FROM {ShardingManager._get_posts_table_by_db(filename)}"
                 for filename in self.databases
             ]
         )
@@ -111,7 +119,7 @@ class DatabaseManager:
         offset = (page - 1) * limit
         union_query = " UNION ALL ".join(
             [
-                f"SELECT * FROM {self._get_posts_table_by_db(filename)}"
+                f"SELECT * FROM {ShardingManager._get_posts_table_by_db(filename)}"
                 for filename in self.databases
             ]
         )
@@ -122,7 +130,7 @@ class DatabaseManager:
     def _fetch_pagination_mapped(self, offset=0, limit=200):
         union_query = " UNION ALL ".join(
             [
-                f"SELECT * FROM {self._get_posts_table_by_db(filename)}"
+                f"SELECT * FROM {ShardingManager._get_posts_table_by_db(filename)}"
                 for filename in self.databases
             ]
         )
@@ -147,7 +155,3 @@ class DatabaseManager:
             fetched += len(posts)
             offset = offset + limit
             yield posts
-
-    def _get_posts_table_by_db(self, db_file):
-        db = os.path.splitext(db_file)[0]
-        return "posts" if db == "db1" else f"{db}.posts"

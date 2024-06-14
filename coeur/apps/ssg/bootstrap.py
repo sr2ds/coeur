@@ -1,5 +1,5 @@
 import os
-from coeur.apps.ssg.db import Post, ContentFormat, Base
+from coeur.apps.ssg.db import Post, ContentFormat, Base, ShardingManager
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -40,7 +40,7 @@ class CreateHandler:
             file.close()
 
         engine = create_engine(
-            f"sqlite:///{name}/db/db1.sqlite",
+            f"sqlite:///{name}/db/{ShardingManager.DB1_NAME}",
             connect_args={"check_same_thread": False},
         )
 
