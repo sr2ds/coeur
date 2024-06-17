@@ -9,6 +9,7 @@ import mistune
 import htmlmin
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from rich.progress import Progress, SpinnerColumn, TextColumn
 
 benchmark = Benchmark()
 
@@ -26,26 +27,36 @@ class BuildHandler:
             )
 
     def handler(self, *args, **kwargs) -> None:
-        benchmark.info()
-        self.create_pagination()
-        self.create_posts_from_db()
-        self.create_sitemap()
-        benchmark.info()
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            transient=True,
+            auto_refresh=True,
+        ) as progress:
+            task = progress.add_task(description="Creating pages (pagination)...", total=10)
+            self.create_pagination()
+            progress.update(task_id=task, advance=10)
+
+            task = progress.add_task(description="Creating single posts...", total=10)
+            self.create_posts_from_db()
+            progress.update(task_id=task, advance=10)
+
+            task = progress.add_task(description="Creating sitemap...", total=10)
+            self.create_sitemap()
+            progress.update(task_id=task, advance=10)
 
     def create_sitemap(
         self,
     ):
-        print("Starting Sitemaps Creation")
         base_url = (
             self.settings.config["base_url"][:-1]
             if self.settings.config["base_url"].endswith("/")
             else self.settings.config["base_url"]
         )
-
         sitemaps = []
         db = DatabaseManager()
         for page, posts_db_page in enumerate(
-            db.generator_page_posts(limit=30000, max_posts_server=self.max_posts), start=1
+            db.generator_page_posts(total_by_page=30000, max_posts_server=self.max_posts), start=1
         ):
             sitemap = self.settings.templates["sitemap"].render({"entries": posts_db_page})
             self.create_file(f"/sitemap{page}.xml", sitemap)
@@ -56,21 +67,18 @@ class BuildHandler:
             {" ".join(sitemaps)}
         </sitemapindex>
         """
-
         self.create_file(f"/sitemap.xml", sitemap_index)
-        print(f"Finished Sitemaps Creation - total pages: {page}")
+        db.session.close()
 
     def create_pagination(
         self,
     ):
-        print("Starting Pagination Creation")
         db = DatabaseManager()
-        total = db.count_total_posts()
         total = 0
 
         for page, posts_db_page in enumerate(
             db.generator_page_posts(
-                limit=self.settings.posts_pagination, max_posts_server=self.max_posts
+                total_by_page=self.settings.posts_pagination, max_posts_server=self.max_posts
             ),
             start=1,
         ):
@@ -84,7 +92,7 @@ class BuildHandler:
                 else:
                     navigation["previous"] = f"/page/{previous}"
 
-            if page < (total / self.settings.posts_pagination):
+            if page > (total / self.settings.posts_pagination):
                 navigation["next"] = f"/page/{page + 1}"
 
             page_list = self.settings.templates["page"].render(
@@ -94,19 +102,15 @@ class BuildHandler:
                 self.create_file(f"/index.html", page_list)
             else:
                 self.create_file(f"/page/{page}/index.html", page_list)
-
-        print("Finished Pagination Creation, last page: ", page)
+        db.session.close()
 
     def create_posts_from_db(
         self,
     ):
         db = DatabaseManager()
-        total = db.count_total_posts()
-        total_used = self.max_posts if self.max_posts else total
-        print(f"Starting Posts Creation - creating {total_used} from {total}")
 
         for posts_db_page in db.generator_page_posts(
-            limit=self.settings.posts_db_pagination, max_posts_server=self.max_posts
+            total_by_page=self.settings.posts_db_pagination, max_posts_server=self.max_posts
         ):
             for future in as_completed(
                 (
@@ -114,21 +118,19 @@ class BuildHandler:
                     for post in posts_db_page
                 )
             ):
-                benchmark.increase()
                 try:
                     future.result()
                 except Exception as e:
                     print(e)
-            benchmark.info()
+        db.session.close()
 
     def handle_post(self, post: Post) -> None:
         if post.content_format == ContentFormat.MARKDOWN.value:
             post.content = mistune.html(post.content)
         html = self.settings.templates["post"].render(post=post)
         if self.settings.config.get("minify", False):
-            print(" minifying")
+            print("minifying")
             html = htmlmin.minify(html, remove_empty_space=True)
-
         self.create_file(f"{post.path}/index.html", html)
 
     def create_file(self, path: str, html: str) -> None:
@@ -142,7 +144,6 @@ class BuildHandler:
 
     def serve(self, port: int):
         self.handler()
-
         observer = ServerObserver(self).observer()
         handler = HttpHandler(self.settings.root_folder, port=port)
         try:
