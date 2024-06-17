@@ -2,3 +2,4 @@ venv
 .env
 dist
 **__pycache__
+public/*

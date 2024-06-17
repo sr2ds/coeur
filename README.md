@@ -101,7 +101,6 @@ blog-coeur ssg markdown-to-db "./content"
 - [ ] Allow to manage the posts from local API or local Dashboard
 - [ ] Support to use post Tags
 - [ ] Hot reload v2 - add websocket to auto-refresh the html in the browser
-- [ ] Split sqlite files when size > 50mb
 
 
 ## Benchmark Overview

@@ -6,7 +6,7 @@ import yaml
 
 
 from coeur.utils import Benchmark
-from coeur.apps.ssg.db import Post, ContentFormat, get_db_session
+from coeur.apps.ssg.db import ContentFormat, DatabaseManager
 
 HANDLE_BATCH_SIZE = 10000
 
@@ -18,18 +18,15 @@ class MarkdownHandler:
     def handler(posts_directory):
         file_generator = MarkdownHandler.find_index_md_files(posts_directory)
         errors = []
-        db = get_db_session()
         while True:
             batch = list(itertools.islice(file_generator, HANDLE_BATCH_SIZE))
             if not batch:
                 break
             try:
-                errors = errors + MarkdownHandler.bulk_create_db_post(db, posts_directory, batch)
+                errors = errors + MarkdownHandler.bulk_create_db_post(posts_directory, batch)
                 benchmark.info()
-                db.commit()
             except Exception as e:
                 print(e)
-        db.close()
         benchmark.info()
         if len(errors):
             print("MarkdownHandler errors:", errors)
@@ -41,15 +38,16 @@ class MarkdownHandler:
             yield file
 
     @staticmethod
-    def bulk_create_db_post(db, base_directory: str, batch: list[str]):
+    def bulk_create_db_post(base_directory: str, batch: list[str]):
         posts = []
         errors = []
+        db = DatabaseManager()
         for file_path in batch:
             with open(file_path, "r") as content:
                 try:
                     header, content = MarkdownHandler.extract_markdown_parts(content.read())
                     posts.append(
-                        Post(
+                        db.new_post(
                             title=header.get("title"),
                             content=content,
                             content_format=ContentFormat.MARKDOWN.value,
@@ -63,13 +61,17 @@ class MarkdownHandler:
                     )
                 except Exception as e:
                     errors.append({"file_path": file_path, "error": e})
+                    # print(e)
                 finally:
                     benchmark.increase()
         try:
-            db.bulk_save_objects(posts)
+            db.session.bulk_save_objects(posts)
+            db.session.commit()
+            db.session.close()
         except Exception as e:
+            print(e)
             errors.append({"batch": batch, "error": e})
-            db.rollback()
+            db.session.rollback()
         return errors
 
     @staticmethod
