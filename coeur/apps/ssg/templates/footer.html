@@ -3,7 +3,7 @@
     <p class="text-center text-base leading-6">
       {% for entry in extra.footer_pages %}
       {% if loop.index > 1 %} &middot; {% endif %}
-      <a href="{{ entry.url }}">{{ entry.title }}</a>
+      <a href="{{ entry.url }}" {% if entry.rel %} rel="{{ entry.rel }}" {% endif %}>{{ entry.title }}</a>
       {% endfor %}
     </p>
     <div class="mt-4">

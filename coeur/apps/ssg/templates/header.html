@@ -19,7 +19,8 @@
               {% for entry in extra.menu_pages %}
               <a target="_blank"
                 class="px-3 py-2 ml-2 rounded-md font-medium text-gray-200 hover:text-white hover:bg-gray-700 focus:outline-none focus:text-white focus:bg-gray-600"
-                href="{{ entry.url | safe }}" title="{{ entry.title }}">{{ entry.title }}</a>
+                href="{{ entry.url | safe }}" {% if entry.rel %} rel="{{ entry.rel }}" {% endif %}
+                title="{{ entry.title }}">{{ entry.title }}</a>
               {% endfor %}
             </div>
           </div>
