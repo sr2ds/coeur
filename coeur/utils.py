@@ -5,6 +5,8 @@ from datetime import timedelta, datetime
 from concurrent.futures import ThreadPoolExecutor
 import http.server
 import socketserver
+import re
+import unicodedata
 
 import toml
 from jinja2 import Environment, FileSystemLoader
@@ -120,3 +122,10 @@ class HttpHandler:
         self.httpd.shutdown()
         self.httpd.server_close()
         print("Server stopped")
+
+
+def slugify(text):
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
+    text = re.sub(r"[^a-zA-Z0-9\s-]", "", text).strip().lower()
+    text = re.sub(r"[\s_-]+", "-", text)
+    return text

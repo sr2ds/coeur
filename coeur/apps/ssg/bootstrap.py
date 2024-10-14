@@ -26,6 +26,16 @@ next_text="Next Page"
 
 """
 
+ENV_TEMPLATE = """
+OPENAI_API_KEY=""
+
+"""
+
+GITIGNORE_TEMPLATE = """
+.env
+
+"""
+
 
 class CreateHandler:
     def __init__(self, name) -> None:
@@ -35,9 +45,16 @@ class CreateHandler:
         os.mkdir(name)
         os.mkdir(f"{name}/db")
 
-        with open(f"{name}/config.toml", "w") as file:
-            file.writelines(CONFIG_TEMPLATE)
-            file.close()
+        files_x_contents = {
+            "config.toml": CONFIG_TEMPLATE,
+            ".env": ENV_TEMPLATE,
+            ".gitignore": GITIGNORE_TEMPLATE,
+        }
+
+        for file_name, content in files_x_contents.items():
+            with open(f"{name}/{file_name}", "w") as file:
+                file.writelines(content)
+                file.close()
 
         engine = create_engine(
             f"sqlite:///{name}/db/{ShardingManager.DB1_NAME}",
