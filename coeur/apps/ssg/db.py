@@ -37,7 +37,7 @@ class Post(Base):
 
     @hybrid_property
     def permalink(self):
-        return f"{settings.get_base_url()}{self.path}/"
+        return f"{settings.get_base_url()}{self.path}"
 
 
 class ShardingManager:

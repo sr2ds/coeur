@@ -1,3 +1,4 @@
+from datetime import datetime, date
 import glob
 import itertools
 import json
@@ -51,9 +52,7 @@ class MarkdownHandler:
                             title=header.get("title"),
                             content=content,
                             content_format=ContentFormat.MARKDOWN.value,
-                            path=file_path.replace(base_directory, "")
-                            .replace("index.md", "")
-                            .replace(".md", ""),
+                            path=MarkdownHandler.get_post_path(base_directory, file_path),
                             extra=json.dumps(header) if header else None,
                             date=header.get("date"),
                             image=header.get("extra", {}).get("image"),
@@ -61,7 +60,6 @@ class MarkdownHandler:
                     )
                 except Exception as e:
                     errors.append({"file_path": file_path, "error": e})
-                    # print(e)
                 finally:
                     benchmark.increase()
         try:
@@ -75,11 +73,27 @@ class MarkdownHandler:
         return errors
 
     @staticmethod
+    def get_post_path(base_directory, file_path):
+        path = file_path.replace(base_directory, "").replace("index.md", "").replace(".md", "")
+        if not path.startswith("/"):
+            path = "/" + path
+        return path
+
+    @staticmethod
     def extract_markdown_parts(markdown_content: str):
         match = re.match(r"---\s*\n(.*?)\n---\s*\n(.*)", markdown_content, re.DOTALL)
         if not match:
             raise ValueError("Invalid format")
         yaml_header = match.group(1)
         content = match.group(2)
-        header_data = yaml.safe_load(yaml_header)
+        header_data = MarkdownHandler.serialize_header(yaml.safe_load(yaml_header))
         return header_data, content
+
+    @staticmethod
+    def serialize_header(header):
+        for key, value in header.items():
+            if isinstance(value, (datetime, date)):
+                header[key] = value.isoformat()
+            elif isinstance(value, dict):
+                MarkdownHandler.serialize_header(value)
+        return header
