@@ -1,6 +1,6 @@
 from coeur.apps.ssg.build import BuildHandler
 from coeur.apps.ssg.markdown import MarkdownHandler
-from coeur.apps.ssg.bootstrap import CreateHandler
+from coeur.apps.ssg.bootstrap import CreateHandler, ExportTemplates
 
 import typer
 
@@ -29,3 +29,9 @@ def serve(port: int = 8080, max_posts: int = None):
 def create(name: str):
     """Create a new coeur ssg project"""
     CreateHandler(name)
+
+
+@app.command()
+def export_templates():
+    """Export the default template for customization"""
+    ExportTemplates.export()
