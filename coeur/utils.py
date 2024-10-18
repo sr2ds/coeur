@@ -122,10 +122,3 @@ class HttpHandler:
         self.httpd.shutdown()
         self.httpd.server_close()
         print("Server stopped")
-
-
-def slugify(text):
-    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
-    text = re.sub(r"[^a-zA-Z0-9\s-]", "", text).strip().lower()
-    text = re.sub(r"[\s_-]+", "-", text)
-    return text
