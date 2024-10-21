@@ -5,11 +5,11 @@ import shutil
 from coeur.apps.ssg.db import DatabaseManager, Post, ContentFormat
 from coeur.utils import Benchmark, BuildSettings, HttpHandler
 
-import mistune
-import htmlmin
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
+import htmlmin
+import mistune
 
 benchmark = Benchmark()
 

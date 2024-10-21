@@ -1,10 +1,10 @@
 import os
+import json
 from enum import Enum
 from coeur.utils import BuildSettings
 
 from sqlalchemy import Column, Integer, String, create_engine, text, MetaData
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
-from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy import event
 
 Base = declarative_base()
@@ -35,9 +35,16 @@ class Post(Base):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    @hybrid_property
+    @property
     def permalink(self):
-        return f"{settings.get_base_url()}{self.path}/"
+        return f"{settings.get_base_url()}{self.path}"
+
+    @property
+    def attrs(self):
+        try:
+            return json.loads(self.extra)
+        except:
+            ...
 
 
 class ShardingManager:

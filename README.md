@@ -95,7 +95,6 @@ blog-coeur ssg markdown-to-db "./content"
  ### TODO List
 
 - [ ] Custom templates (themes)
-    - [ ] Command to export template folder
     - [ ] Documentation about templates
 - [ ] Allow to manage the posts from local API or local Dashboard
 - [ ] Support to use post Tags

@@ -1,4 +1,6 @@
 import os
+import pathlib
+import shutil
 from coeur.apps.ssg.db import Post, ContentFormat, Base, ShardingManager
 
 from sqlalchemy import create_engine
@@ -40,7 +42,7 @@ GITIGNORE_TEMPLATE = """
 class CreateHandler:
     def __init__(self, name) -> None:
         if os.path.exists(f"./{name}"):
-            raise "Folder exists"
+            raise ValueError("Folder exists")
 
         os.mkdir(name)
         os.mkdir(f"{name}/db")
@@ -77,3 +79,16 @@ class CreateHandler:
         )
         session.flush()
         session.commit()
+
+
+class ExportTemplates:
+    @staticmethod
+    def export():
+        if os.path.exists("./templates"):
+            raise ValueError(
+                f"You already have the templates folder at templates. "
+                "Backup it and rename to be able to export the default."
+            )
+        os.makedirs("./templates", exist_ok=True)
+        src = pathlib.Path(__file__).parent.resolve()
+        shutil.copytree(f"{src}/templates/", "./templates/", dirs_exist_ok=True)

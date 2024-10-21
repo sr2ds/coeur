@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 
 from coeur.apps.ssg.db import ContentFormat, DatabaseManager
-from coeur.utils import slugify
+from slugify import slugify
 
 from openai import OpenAI
 from dotenv import load_dotenv
