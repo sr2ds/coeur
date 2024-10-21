@@ -33,15 +33,18 @@ class Post(Base):
             self.__table__.metadata = MetaData(schema=schema)
 
         for key, value in kwargs.items():
-            if key == "extra":
-                try:
-                    value = json.loads(value)
-                except:
-                    ...
             setattr(self, key, value)
 
+    @property
     def permalink(self):
         return f"{settings.get_base_url()}{self.path}"
+
+    @property
+    def attrs(self):
+        try:
+            return json.loads(self.extra)
+        except:
+            ...
 
 
 class ShardingManager:
