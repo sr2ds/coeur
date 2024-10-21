@@ -1,10 +1,10 @@
 import os
+import json
 from enum import Enum
 from coeur.utils import BuildSettings
 
 from sqlalchemy import Column, Integer, String, create_engine, text, MetaData
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
-from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy import event
 
 Base = declarative_base()
@@ -33,9 +33,13 @@ class Post(Base):
             self.__table__.metadata = MetaData(schema=schema)
 
         for key, value in kwargs.items():
+            if key == "extra":
+                try:
+                    value = json.loads(value)
+                except:
+                    ...
             setattr(self, key, value)
 
-    @hybrid_property
     def permalink(self):
         return f"{settings.get_base_url()}{self.path}"
 
