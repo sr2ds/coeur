@@ -129,7 +129,6 @@ class BuildHandler:
             post.content = mistune.html(post.content)
         html = self.settings.templates["post"].render(post=post)
         if self.settings.config.get("minify", False):
-            print("minifying")
             html = htmlmin.minify(html, remove_empty_space=True)
         self.create_file(f"{post.path}/index.html", html)
 
