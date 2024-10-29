@@ -57,7 +57,12 @@ class OpenAIEngine:
 
 class Engine:
     @staticmethod
-    def title_to_post(title: str, img_url: str = None, custom_prompt: str = None):
+    def title_to_post(
+        title: str,
+        img_url: str = None,
+        custom_prompt: str = None,
+        custom_path: str = None,
+    ):
         ai_engine = OpenAIEngine()
 
         content = Content(
@@ -66,25 +71,37 @@ class Engine:
             content=ai_engine.generate_content(title, custom_prompt=custom_prompt),
         )
 
-        Engine.store_post(content)
+        Engine.store_post(content, custom_path)
 
     @staticmethod
-    def store_post(content: Content):
-        db = DatabaseManager()
+    def build_post_path(content: Content, custom_path: str = None):
+        if custom_path:
+            parts = custom_path.split("/")
+            slugs = [slugify(part) for part in parts if part]
+            path = "/".join(slugs)
+            if not path.endswith("/"):
+                path = f"{path}/"
+            return path
+
         today = datetime.now()
         path_prefix = today.strftime("%Y/%m/%d")
+        return f"/{path_prefix}/{slugify(content.title)}/"
+
+    @staticmethod
+    def store_post(content: Content, custom_path: str = None):
+        db = DatabaseManager()
+        today = datetime.now()
         try:
             post = db.new_post(
                 title=content.title,
                 content=content.content,
                 content_format=ContentFormat.HTML.value,
-                path=f"/{path_prefix}/{slugify(content.title)}/",
+                path=Engine.build_post_path(content, custom_path),
                 extra=json.dumps({}),
                 date=today.strftime("%Y-%m-%d"),
                 image=content.img_url,
             )
             db.session.add(post)
-            print(post.content)
             db.session.commit()
         except Exception as e:
             print(e)
