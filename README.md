@@ -96,7 +96,8 @@ blog-coeur ssg markdown-to-db "./content"
 
 - [ ] Custom templates (themes)
     - [ ] Documentation about templates
-- [ ] Allow to manage the posts from local API or local Dashboard
+- [ ] Allow to manage the posts from SQLAlchemyAdmin dashboard
+  - [ ] DB Solution about id
 - [ ] Support to use post Tags
 - [ ] Hot reload v2 - add websocket to auto-refresh the html in the browser
 
