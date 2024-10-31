@@ -8,7 +8,7 @@ from coeur.utils import Benchmark, BuildSettings, HttpHandler
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
-import htmlmin
+import minify_html
 import mistune
 
 benchmark = Benchmark()
@@ -129,7 +129,12 @@ class BuildHandler:
             post.content = mistune.html(post.content)
         html = self.settings.templates["post"].render(post=post)
         if self.settings.config.get("minify", False):
-            html = htmlmin.minify(html, remove_empty_space=True)
+            html = minify_html.minify(
+                html,
+                minify_js=True,
+                minify_css=True,
+                remove_processing_instructions=True,
+            )
         self.create_file(f"{post.path}/index.html", html)
 
     def create_file(self, path: str, html: str) -> None:
