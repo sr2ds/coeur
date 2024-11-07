@@ -122,6 +122,11 @@ It is highly recommended to use a custom-prompt to enhance your experience and g
 
 You can also set the img-url parameter to include an image in the post. This needs to be a valid image URL, such as one hosted on S3.
 
+
+## Module PDS – Post Distribution Service
+
+This module will help us to automatically publish the blog posts in the social midias.
+
 ## Benchmark Overview
 
 My initial goal was to be able to build my project without exploding my RAM memory as happened with all the frameworks I tried and used throughout the growth of my blog, these benchmark numbers below are the real numbers for the same blog that consumes 12GB to be built with Zola.

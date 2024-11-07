@@ -24,7 +24,7 @@ class Content:
 
 class OpenAIEngine:
     def client(self):
-        api_key = api_key = os.getenv("OPENAI_API_KEY")
+        api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ValueError("API key is missing or not set in the environment variables.")
         return OpenAI(api_key=api_key)

@@ -30,6 +30,8 @@ next_text="Next Page"
 
 ENV_TEMPLATE = """
 OPENAI_API_KEY=""
+INSTAGRAM_USERNAME=""
+INSTAGRAM_PASSWORD=""
 
 """
 

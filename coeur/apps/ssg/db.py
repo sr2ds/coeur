@@ -104,6 +104,11 @@ class ShardingManager:
             ShardingManager.create_new_database()
 
 
+class OrderBy(Enum):
+    ASC = "ASC"
+    DESC = "DESC"
+
+
 class DatabaseManager:
     def __init__(self):
         engine = create_engine(f"sqlite:///db/{ShardingManager.DB1_NAME}")
@@ -130,11 +135,67 @@ class DatabaseManager:
         union_query = ShardingManager.generate_union_posts_query(fields="title, content")
         return self.session.execute(text(f"SELECT COUNT(*) FROM ({union_query})")).fetchone()[0]
 
-    def get_all_posts(self, page: int = 1, limit: int = 200):
+    def get_posts(
+        self,
+        page: int = 1,
+        limit: int = 200,
+        order_by: OrderBy = OrderBy.DESC,
+        filters: list = None,
+        exclude_filters: list = None,
+    ):
+        filters = filters or []
+        exclude_filters = exclude_filters or []
+
         offset = (page - 1) * limit
         union_query = ShardingManager.generate_union_posts_query()
-        query = f"SELECT * FROM ({union_query}) AS all_posts LIMIT :limit OFFSET :offset"
-        return self.session.execute(text(query), {"limit": limit, "offset": offset}).fetchall()
+
+        where_clauses = []
+        exclude_clauses = []
+        parameters = {}
+
+        for filter in filters:
+            for field, value in filter.items():
+                if field == "extra":
+                    where_clauses.append(f"{field} LIKE :{field}")
+                    parameters[field] = f"%{value}%"
+                else:
+                    where_clauses.append(f"{field} = :{field}")
+                    parameters[field] = value
+
+        for filter in exclude_filters:
+            for field, value in filter.items():
+                if field == "extra":
+                    exclude_clauses.append(f"{field} NOT LIKE :exclude_{field}")
+                    parameters[f"exclude_{field}"] = f"%{value}%"
+                else:
+                    exclude_clauses.append(f"{field} != :exclude_{field}")
+                    parameters[f"exclude_{field}"] = value
+
+        where_clause = (
+            " AND ".join(where_clauses + exclude_clauses)
+            if where_clauses or exclude_clauses
+            else "1=1"
+        )
+
+        query = f"""
+            SELECT * FROM ({union_query}) AS all_posts
+            WHERE {where_clause}
+            ORDER BY date {order_by.value}
+            LIMIT :limit OFFSET :offset
+        """
+
+        parameters["limit"] = limit
+        parameters["offset"] = offset
+
+        result = self.session.execute(text(query), parameters)
+        posts = result.fetchall()
+        posts_dicts = []
+        for post_tuple in posts:
+            post_dict = {}
+            for idx, column in enumerate(result.keys()):
+                post_dict[column] = post_tuple[idx]
+            posts_dicts.append(post_dict)
+        return [Post(**post_dict) for post_dict in posts_dicts]
 
     def _fetch_pagination_mapped(self, offset: int = 0, limit: int = 200):
         union_query = ShardingManager.generate_union_posts_query()
