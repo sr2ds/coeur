@@ -1,15 +1,12 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from urllib.parse import urlparse
 import os
-import os
-import requests
-import uuid
 
 from coeur.apps.ssg.db import Post
 
 from dotenv import load_dotenv
 from instagrapi import Client as InstagramClient
+from instagrapi.exceptions import LoginRequired
 
 load_dotenv(dotenv_path="./.env")
 
@@ -22,9 +19,6 @@ class ChannelAbstract(ABC):
     @abstractmethod
     def publish(self, post: Post): ...
 
-    @abstractmethod
-    def build_text(self, post: Post) -> str: ...
-
 
 class Instagram(ChannelAbstract):
     client = None
@@ -33,54 +27,71 @@ class Instagram(ChannelAbstract):
         self.client = self._create_client()
 
     def _create_client(self) -> InstagramClient:
-        client = InstagramClient()
+        client = InstagramClient(delay_range=[1, 3])
         username = os.getenv("INSTAGRAM_USERNAME")
         password = os.getenv("INSTAGRAM_PASSWORD")
 
         if not username or not password:
             raise ValueError("Instagram username or password not provided.")
 
-        client.login(username, password)
+        try:
+            session = client.load_settings("session.json")
+        except:
+            session = None
+
+        login_via_session = False
+        login_via_pw = False
+
+        if session:
+            try:
+                client.set_settings(session)
+                client.login(username, password)
+                try:
+                    client.get_timeline_feed()
+                except LoginRequired:
+                    print("Session is invalid, need to login via username and password")
+                    old_session = client.get_settings()
+                    client.set_settings({})
+                    client.set_uuids(old_session["uuids"])
+                    client.login(username, password)
+                    client.dump_settings("session.json")
+                login_via_session = True
+            except Exception as e:
+                print("Couldn't login user using session information: %s" % e)
+
+        if not login_via_session:
+            try:
+                print("Attempting to login via username and password. username: %s" % username)
+                if client.login(username, password):
+                    client.dump_settings("session.json")
+                    login_via_pw = True
+            except Exception as e:
+                print("Couldn't login user using username and password: %s" % e)
+
+        if not login_via_pw and not login_via_session:
+            raise Exception("Couldn't login user with either password or session")
+
         return client
 
-    def publish(self, post: Post) -> dict:
-        # @todo: test it and return the publish URL
-        return ""
+    def publish(self, text, image_path, title) -> dict:
         try:
-            img_path = download_image(post.image)
             publish = self.client.photo_upload(
-                img_path,
-                post.text,
+                image_path,
+                text,
                 extra_data={
-                    "custom_accessibility_caption": post.title,
+                    "custom_accessibility_caption": title,
                     "like_and_view_counts_disabled": 0,
                     "disable_comments": 0,
                 },
             )
-            print(publish.dict())
-            return publish.dict()
+            return f"https://www.instagram.com/p/{publish.dict()['code']}"
         except Exception as e:
             print(e)
         finally:
-            if os.path.exists(img_path):
-                os.remove(img_path)
-
-    def build_text(self, post: Post) -> str:
-        # do something in the text
-        return post.text
+            if os.path.exists(image_path):
+                os.remove(image_path)
 
 
 channel_engines = {
     Channels.INSTAGRAM: Instagram,
 }
-
-
-def download_image(url, save_dir="temp"):
-    os.makedirs(save_dir, exist_ok=True)
-    extension = os.path.splitext(urlparse(url).path)[1] or ".jpg"
-    local_path = os.path.join(save_dir, f"{uuid.uuid4()}{extension}")
-    response = requests.get(url)
-    response.raise_for_status()
-    with open(local_path, "wb") as file:
-        file.write(response.content)
-    return local_path
