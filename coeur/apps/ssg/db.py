@@ -26,11 +26,15 @@ class Post(Base):
     image = Column(String)
     extra = Column(String)
     date = Column(String)
+    db = Column(Integer, nullable=False)
 
-    def __init__(self, schema=None, **kwargs):
-        if schema:
-            self.__table__.schema = schema
-            self.__table__.metadata = MetaData(schema=schema)
+    def __init__(self, db, **kwargs):
+        super().__init__(**kwargs)
+        self.db = db
+        if db > 1:
+            db_name = f"db{db}"
+            self.__table__.schema = db_name
+            self.__table__.metadata = MetaData(schema=db_name)
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -53,7 +57,7 @@ class ShardingManager:
 
     @staticmethod
     def get_databases():
-        return [filename for filename in os.listdir("db")]
+        return [filename for filename in os.listdir("db") if filename.endswith(".sqlite")]
 
     @staticmethod
     def get_smallest_db():
@@ -128,7 +132,7 @@ class DatabaseManager:
             date=date,
             image=image,
             # would be nice do it better, but sqlalchemy orm has no support
-            schema=smallest_db if smallest_db != "db1" else None,
+            db=int(smallest_db.replace("db", "")),
         )
 
     def count_total_posts(self):
@@ -188,14 +192,7 @@ class DatabaseManager:
         parameters["offset"] = offset
 
         result = self.session.execute(text(query), parameters)
-        posts = result.fetchall()
-        posts_dicts = []
-        for post_tuple in posts:
-            post_dict = {}
-            for idx, column in enumerate(result.keys()):
-                post_dict[column] = post_tuple[idx]
-            posts_dicts.append(post_dict)
-        return [Post(**post_dict) for post_dict in posts_dicts]
+        return result.fetchall()
 
     def _fetch_pagination_mapped(self, offset: int = 0, limit: int = 200):
         union_query = ShardingManager.generate_union_posts_query()

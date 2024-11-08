@@ -32,12 +32,13 @@ ENV_TEMPLATE = """
 OPENAI_API_KEY=""
 INSTAGRAM_USERNAME=""
 INSTAGRAM_PASSWORD=""
+SOCIAL_DEFAULT_IMAGE_URL=""
 
 """
 
 GITIGNORE_TEMPLATE = """
 .env
-
+session.json
 """
 
 
@@ -77,6 +78,7 @@ class CreateHandler:
                 path="/posts/welcome",
                 extra=None,
                 image="/img/sacre-coeur.png",
+                db=1,
             )
         )
         session.flush()
