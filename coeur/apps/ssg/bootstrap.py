@@ -1,4 +1,5 @@
 import os
+import uuid
 import pathlib
 import shutil
 from coeur.apps.ssg.db import Post, ContentFormat, Base, ShardingManager
@@ -72,6 +73,7 @@ class CreateHandler:
 
         session.add(
             Post(
+                uuid=str(uuid.uuid4()),
                 title="Hello World!",
                 content="Welcome to Coeur Post",
                 content_format=ContentFormat.MARKDOWN.value,

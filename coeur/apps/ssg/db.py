@@ -1,4 +1,5 @@
 import os
+import uuid
 import json
 from enum import Enum
 from coeur.utils import BuildSettings
@@ -18,7 +19,7 @@ class ContentFormat(Enum):
 
 class Post(Base):
     __tablename__ = "posts"
-    id = Column(Integer, primary_key=True)
+    uuid = Column(String, nullable=False, primary_key=True)
     title = Column(String, nullable=False)
     content = Column(String, nullable=False)
     content_format = Column(String)
@@ -124,6 +125,7 @@ class DatabaseManager:
     def new_post(self, title, content, content_format, path, extra, date, image):
         smallest_db = ShardingManager.get_smallest_db()
         return Post(
+            uuid=str(uuid.uuid4()),
             title=title,
             content=content,
             content_format=content_format,

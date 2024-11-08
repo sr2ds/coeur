@@ -49,11 +49,11 @@ class Engine:
                 )
                 extra = self.update_extra_attribute(channel, post, published_url)
                 db.session.execute(
-                    text(f"UPDATE db{post.db}.posts SET extra = :extra WHERE id = :id"),
-                    {"extra": extra, "id": post.id},
+                    text(f"UPDATE db{post.db}.posts SET extra = :extra WHERE uuid = :uuid"),
+                    {"extra": extra, "uuid": post.uuid},
                 )
                 db.session.commit()
-                print(post.id, post.title, published_url)
+                print(post.uuid, post.title, published_url)
             except Exception as e:
                 print(e)
                 db.session.rollback()
