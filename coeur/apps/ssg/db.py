@@ -25,9 +25,9 @@ class Post(Base):
     content = Column(String, nullable=False)
     content_format = Column(String)
     path = Column(String)
-    image = Column(String)
     extra = Column(String)
     date = Column(String)
+    image = Column(String)
     db = Column(Integer, nullable=False)
 
     def __init__(self, db, **kwargs):
