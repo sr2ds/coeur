@@ -5,6 +5,7 @@ from enum import Enum
 from coeur.utils import BuildSettings
 
 from sqlalchemy import Column, Integer, String, create_engine, text, MetaData
+from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from sqlalchemy import event
 
@@ -201,13 +202,7 @@ class DatabaseManager:
         query = f"SELECT * FROM ({union_query}) AS all_posts LIMIT :limit OFFSET :offset"
         result = self.session.execute(text(query), {"limit": limit, "offset": offset})
         posts = result.fetchall()
-        posts_dicts = []
-        for post_tuple in posts:
-            post_dict = {}
-            for idx, column in enumerate(result.keys()):
-                post_dict[column] = post_tuple[idx]
-            posts_dicts.append(post_dict)
-        return [Post(**post_dict) for post_dict in posts_dicts]
+        return DatabaseManager.map_posts(posts)
 
     def generator_page_posts(self, total_by_page: int = 200, max_posts_server: int = None):
         total = self.count_total_posts()
@@ -224,3 +219,14 @@ class DatabaseManager:
             yield posts
             if max_posts_server and fetched >= max_posts_server:
                 break
+
+    @staticmethod
+    def map_posts(posts) -> Post:
+        columns = [column.name for column in inspect(Post).c]
+        posts_dicts = []
+        for post_tuple in posts:
+            post_dict = {}
+            for idx, column in enumerate(columns):
+                post_dict[column] = post_tuple[idx]
+            posts_dicts.append(post_dict)
+        return [Post(**post_dict) for post_dict in posts_dicts]

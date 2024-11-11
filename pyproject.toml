@@ -25,6 +25,8 @@ python-slugify = "^8.0.4"
 minify-html = "^0.15.0"
 instagrapi = "^2.1.2"
 pillow = "^11.0.0"
+beautifulsoup4 = "^4.12.3"
+lxml = "^5.3.0"
 
 [tool.poetry.scripts]
 blog-coeur = "coeur.main:app"

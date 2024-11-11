@@ -12,7 +12,10 @@ from coeur.apps.pds.channels import channel_engines, Channels
 
 from sqlalchemy import text
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 
+
+load_dotenv(dotenv_path="./.env")
 SOCIAL_DEFAULT_IMAGE_URL = os.getenv("SOCIAL_DEFAULT_IMAGE_URL")
 
 
@@ -53,7 +56,7 @@ class Engine:
                     {"extra": extra, "uuid": post.uuid},
                 )
                 db.session.commit()
-                print(post.uuid, post.title, published_url)
+                print(post.uuid, post.db, post.title, published_url)
             except Exception as e:
                 print(e)
                 db.session.rollback()
@@ -77,21 +80,25 @@ class Engine:
             return post.extra
 
     def handle_img(self, image_url=None) -> str:
-        if not image_url:
-            image_url = SOCIAL_DEFAULT_IMAGE_URL
-        os.makedirs("temp", exist_ok=True)
-        extension = os.path.splitext(urlparse(image_url).path)[1] or ".jpg"
-        local_path = os.path.join("temp", f"{uuid.uuid4()}{extension}")
-        response = requests.get(image_url)
-        response.raise_for_status()
-        with open(local_path, "wb") as file:
-            file.write(response.content)
-        return local_path
+        try:
+            if not image_url:
+                image_url = SOCIAL_DEFAULT_IMAGE_URL
+            os.makedirs("temp", exist_ok=True)
+            extension = os.path.splitext(urlparse(image_url).path)[1] or ".jpg"
+            local_path = os.path.join("temp", f"{uuid.uuid4()}{extension}")
+            response = requests.get(image_url)
+            response.raise_for_status()
+            with open(local_path, "wb") as file:
+                file.write(response.content)
+            return local_path
+        except Exception as e:
+            print("handle_img", e)
 
     def handle_content(self, post):
+        maped_post = DatabaseManager.map_posts([post])[0]
         text = post.title
         text += f"\n\n{self.extract_text_from_markdown(post.content)}"
-        text += f"\n\n{post.permalink}"
+        text += f"\n\n{maped_post.permalink}"
         return text
 
     def extract_text_from_markdown(self, markdown_text: str, word_limit: int = 150) -> str:
