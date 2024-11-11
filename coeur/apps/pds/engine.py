@@ -24,9 +24,14 @@ class Engine:
         self,
         channels: list[Channels],
         total: int,
+        post_footer: str = None,
     ):
         self.channels = channels
         self.total = total
+        self.post_footer = post_footer
+
+        if not SOCIAL_DEFAULT_IMAGE_URL:
+            raise ValueError("SOCIAL_DEFAULT_IMAGE_URL not defined on .env.")
 
     def run(self) -> None:
         for channel in self.channels:
@@ -94,11 +99,13 @@ class Engine:
         except Exception as e:
             print("handle_img", e)
 
-    def handle_content(self, post):
+    def handle_content(self, post) -> str:
         maped_post = DatabaseManager.map_posts([post])[0]
         text = post.title
         text += f"\n\n{self.extract_text_from_markdown(post.content)}"
         text += f"\n\n{maped_post.permalink}"
+        if self.post_footer:
+            text += f"\n\n{self.post_footer}"
         return text
 
     def extract_text_from_markdown(self, markdown_text: str, word_limit: int = 150) -> str:
