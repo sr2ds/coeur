@@ -5,8 +5,6 @@ from datetime import timedelta, datetime
 from concurrent.futures import ThreadPoolExecutor
 import http.server
 import socketserver
-import re
-import unicodedata
 
 import toml
 from jinja2 import Environment, FileSystemLoader

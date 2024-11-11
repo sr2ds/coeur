@@ -97,7 +97,6 @@ blog-coeur ssg markdown-to-db "./content"
 - [ ] Custom templates (themes)
     - [ ] Documentation about templates
 - [ ] Allow to manage the posts from SQLAlchemyAdmin dashboard
-  - [ ] DB Solution about id
 - [ ] Support to use post Tags
 - [ ] Hot reload v2 - add websocket to auto-refresh the html in the browser
 
@@ -121,6 +120,11 @@ The first parameter is required and will be the title of the post.
 It is highly recommended to use a custom-prompt to enhance your experience and get better results. This prompt can be in any language.
 
 You can also set the img-url parameter to include an image in the post. This needs to be a valid image URL, such as one hosted on S3.
+
+
+## Module PDS – Post Distribution Service
+
+This module will help us to automatically publish the blog posts in the social midias.
 
 ## Benchmark Overview
 

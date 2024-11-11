@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "blog-coeur"
-version = "0.0.11"
+version = "0.0.12"
 description = "Coeur - static site management"
 authors = ["David Silva <srdavidsilva@gmail.com>"]
 readme = "README.md"
@@ -23,6 +23,10 @@ openai = "^1.51.2"
 python-dotenv = "^1.0.1"
 python-slugify = "^8.0.4"
 minify-html = "^0.15.0"
+instagrapi = "^2.1.2"
+pillow = "^11.0.0"
+beautifulsoup4 = "^4.12.3"
+lxml = "^5.3.0"
 
 [tool.poetry.scripts]
 blog-coeur = "coeur.main:app"

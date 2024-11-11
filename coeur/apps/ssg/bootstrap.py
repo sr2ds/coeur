@@ -1,4 +1,5 @@
 import os
+import uuid
 import pathlib
 import shutil
 from coeur.apps.ssg.db import Post, ContentFormat, Base, ShardingManager
@@ -30,12 +31,15 @@ next_text="Next Page"
 
 ENV_TEMPLATE = """
 OPENAI_API_KEY=""
+INSTAGRAM_USERNAME=""
+INSTAGRAM_PASSWORD=""
+SOCIAL_DEFAULT_IMAGE_URL=""
 
 """
 
 GITIGNORE_TEMPLATE = """
 .env
-
+session.json
 """
 
 
@@ -69,12 +73,14 @@ class CreateHandler:
 
         session.add(
             Post(
+                uuid=str(uuid.uuid4()),
                 title="Hello World!",
                 content="Welcome to Coeur Post",
                 content_format=ContentFormat.MARKDOWN.value,
                 path="/posts/welcome",
                 extra=None,
                 image="/img/sacre-coeur.png",
+                db=1,
             )
         )
         session.flush()

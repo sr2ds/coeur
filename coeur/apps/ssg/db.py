@@ -1,9 +1,11 @@
 import os
+import uuid
 import json
 from enum import Enum
 from coeur.utils import BuildSettings
 
 from sqlalchemy import Column, Integer, String, create_engine, text, MetaData
+from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from sqlalchemy import event
 
@@ -18,7 +20,7 @@ class ContentFormat(Enum):
 
 class Post(Base):
     __tablename__ = "posts"
-    id = Column(Integer, primary_key=True)
+    uuid = Column(String, nullable=False, primary_key=True)
     title = Column(String, nullable=False)
     content = Column(String, nullable=False)
     content_format = Column(String)
@@ -26,11 +28,15 @@ class Post(Base):
     image = Column(String)
     extra = Column(String)
     date = Column(String)
+    db = Column(Integer, nullable=False)
 
-    def __init__(self, schema=None, **kwargs):
-        if schema:
-            self.__table__.schema = schema
-            self.__table__.metadata = MetaData(schema=schema)
+    def __init__(self, db, **kwargs):
+        super().__init__(**kwargs)
+        self.db = db
+        if db > 1:
+            db_name = f"db{db}"
+            self.__table__.schema = db_name
+            self.__table__.metadata = MetaData(schema=db_name)
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -53,7 +59,7 @@ class ShardingManager:
 
     @staticmethod
     def get_databases():
-        return [filename for filename in os.listdir("db")]
+        return [filename for filename in os.listdir("db") if filename.endswith(".sqlite")]
 
     @staticmethod
     def get_smallest_db():
@@ -104,6 +110,11 @@ class ShardingManager:
             ShardingManager.create_new_database()
 
 
+class OrderBy(Enum):
+    ASC = "ASC"
+    DESC = "DESC"
+
+
 class DatabaseManager:
     def __init__(self):
         engine = create_engine(f"sqlite:///db/{ShardingManager.DB1_NAME}")
@@ -115,6 +126,7 @@ class DatabaseManager:
     def new_post(self, title, content, content_format, path, extra, date, image):
         smallest_db = ShardingManager.get_smallest_db()
         return Post(
+            uuid=str(uuid.uuid4()),
             title=title,
             content=content,
             content_format=content_format,
@@ -123,31 +135,74 @@ class DatabaseManager:
             date=date,
             image=image,
             # would be nice do it better, but sqlalchemy orm has no support
-            schema=smallest_db if smallest_db != "db1" else None,
+            db=int(smallest_db.replace("db", "")),
         )
 
     def count_total_posts(self):
         union_query = ShardingManager.generate_union_posts_query(fields="title, content")
         return self.session.execute(text(f"SELECT COUNT(*) FROM ({union_query})")).fetchone()[0]
 
-    def get_all_posts(self, page: int = 1, limit: int = 200):
+    def get_posts(
+        self,
+        page: int = 1,
+        limit: int = 200,
+        order_by: OrderBy = OrderBy.DESC,
+        filters: list = None,
+        exclude_filters: list = None,
+    ):
+        filters = filters or []
+        exclude_filters = exclude_filters or []
+
         offset = (page - 1) * limit
         union_query = ShardingManager.generate_union_posts_query()
-        query = f"SELECT * FROM ({union_query}) AS all_posts LIMIT :limit OFFSET :offset"
-        return self.session.execute(text(query), {"limit": limit, "offset": offset}).fetchall()
+
+        where_clauses = []
+        exclude_clauses = []
+        parameters = {}
+
+        for filter in filters:
+            for field, value in filter.items():
+                if field == "extra":
+                    where_clauses.append(f"{field} LIKE :{field}")
+                    parameters[field] = f"%{value}%"
+                else:
+                    where_clauses.append(f"{field} = :{field}")
+                    parameters[field] = value
+
+        for filter in exclude_filters:
+            for field, value in filter.items():
+                if field == "extra":
+                    exclude_clauses.append(f"{field} NOT LIKE :exclude_{field}")
+                    parameters[f"exclude_{field}"] = f"%{value}%"
+                else:
+                    exclude_clauses.append(f"{field} != :exclude_{field}")
+                    parameters[f"exclude_{field}"] = value
+
+        where_clause = (
+            " AND ".join(where_clauses + exclude_clauses)
+            if where_clauses or exclude_clauses
+            else "1=1"
+        )
+
+        query = f"""
+            SELECT * FROM ({union_query}) AS all_posts
+            WHERE {where_clause}
+            ORDER BY date {order_by.value}
+            LIMIT :limit OFFSET :offset
+        """
+
+        parameters["limit"] = limit
+        parameters["offset"] = offset
+
+        result = self.session.execute(text(query), parameters)
+        return result.fetchall()
 
     def _fetch_pagination_mapped(self, offset: int = 0, limit: int = 200):
         union_query = ShardingManager.generate_union_posts_query()
         query = f"SELECT * FROM ({union_query}) AS all_posts LIMIT :limit OFFSET :offset"
         result = self.session.execute(text(query), {"limit": limit, "offset": offset})
         posts = result.fetchall()
-        posts_dicts = []
-        for post_tuple in posts:
-            post_dict = {}
-            for idx, column in enumerate(result.keys()):
-                post_dict[column] = post_tuple[idx]
-            posts_dicts.append(post_dict)
-        return [Post(**post_dict) for post_dict in posts_dicts]
+        return DatabaseManager.map_posts(posts)
 
     def generator_page_posts(self, total_by_page: int = 200, max_posts_server: int = None):
         total = self.count_total_posts()
@@ -164,3 +219,14 @@ class DatabaseManager:
             yield posts
             if max_posts_server and fetched >= max_posts_server:
                 break
+
+    @staticmethod
+    def map_posts(posts) -> Post:
+        columns = [column.name for column in inspect(Post).c]
+        posts_dicts = []
+        for post_tuple in posts:
+            post_dict = {}
+            for idx, column in enumerate(columns):
+                post_dict[column] = post_tuple[idx]
+            posts_dicts.append(post_dict)
+        return [Post(**post_dict) for post_dict in posts_dicts]
