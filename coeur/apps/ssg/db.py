@@ -62,6 +62,13 @@ class ShardingManager:
         return [filename for filename in os.listdir("db") if filename.endswith(".sqlite")]
 
     @staticmethod
+    def get_posts_classes():
+        post_classes = {}
+        for i, db in enumerate(ShardingManager.get_databases(), start=1):
+            post_classes[i] = type(f"PostDb{i}", (Post,), {})
+        return post_classes
+
+    @staticmethod
     def get_smallest_db():
         smallest_db = min(
             ShardingManager.get_databases(), key=lambda db: os.path.getsize(f"db/{db}")
