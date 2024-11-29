@@ -42,6 +42,7 @@ SOCIAL_DEFAULT_IMAGE_URL=""
 GITIGNORE_TEMPLATE = """
 .env
 session.json
+public/*
 """
 
 
