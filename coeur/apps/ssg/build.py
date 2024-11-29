@@ -1,4 +1,5 @@
 from concurrent.futures import as_completed
+from datetime import datetime
 import os
 import shutil
 
@@ -18,6 +19,9 @@ class BuildHandler:
     def __init__(self, max_posts: int = None):
         self.max_posts = max_posts
         self.settings = BuildSettings("./config.toml")
+        self.clean_and_copy_statics()
+
+    def clean_and_copy_statics(self):
         shutil.rmtree(self.settings.root_folder, ignore_errors=True)
         if os.path.exists(f"{self.settings.template_folder}/static"):
             shutil.copytree(
@@ -55,10 +59,27 @@ class BuildHandler:
         )
         sitemaps = []
         db = DatabaseManager()
+        max_items_by_sitemap = 30000
+        seo_variations = self.settings.get_seo_variations_path()
+        seo_variations_count = len(seo_variations) if seo_variations else 1
+        total_by_page = int(max_items_by_sitemap / seo_variations_count)
+
         for page, posts_db_page in enumerate(
-            db.generator_page_posts(total_by_page=30000, max_posts_server=self.max_posts), start=1
+            db.generator_page_posts(total_by_page=total_by_page, max_posts_server=self.max_posts),
+            start=1,
         ):
-            sitemap = self.settings.templates["sitemap"].render({"entries": posts_db_page})
+            extra_posts = []
+            for post in posts_db_page:
+                for path in seo_variations:
+                    extra_post = post.__dict__.copy()
+                    extra_post.pop("_sa_instance_state", None)
+                    extra_post["path"] = f'{post.path.rstrip("/")}-{path}/'
+                    extra_post["date"] = datetime.today().strftime("%Y-%m-%d")
+                    extra_posts.append(Post(**extra_post))
+
+            sitemap = self.settings.templates["sitemap"].render(
+                {"entries": posts_db_page + extra_posts}
+            )
             self.create_file(f"/sitemap{page}.xml", sitemap)
             sitemaps.append(f"<sitemap><loc>{base_url}/sitemap{page}.xml</loc></sitemap>")
 
@@ -136,6 +157,10 @@ class BuildHandler:
                 remove_processing_instructions=True,
             )
         self.create_file(f"{post.path}/index.html", html)
+        extra_paths = self.settings.get_seo_variations_path()
+        for path in extra_paths:
+            extra_path = f'{post.path.rstrip("/")}-{path}'
+            self.create_file(f"/{extra_path}/index.html", html)
 
     def create_file(self, path: str, html: str) -> None:
         folder_path = f"{self.settings.root_folder}/{path}"
@@ -171,5 +196,6 @@ class ServerObserver:
         return observer
 
     def on_change(self, *args):
+        self.cls.clean_and_copy_statics()
         self.cls.handler()
         self.cls.settings.reload_templates()

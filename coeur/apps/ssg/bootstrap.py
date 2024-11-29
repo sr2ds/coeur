@@ -27,6 +27,8 @@ footer_pages = [
 previous_text="Previous Page"
 next_text="Next Page"
 
+[seo_variations]
+paths = []
 """
 
 ENV_TEMPLATE = """
@@ -40,6 +42,7 @@ SOCIAL_DEFAULT_IMAGE_URL=""
 GITIGNORE_TEMPLATE = """
 .env
 session.json
+public/*
 """
 
 
