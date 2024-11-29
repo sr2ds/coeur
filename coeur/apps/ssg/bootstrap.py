@@ -27,6 +27,8 @@ footer_pages = [
 previous_text="Previous Page"
 next_text="Next Page"
 
+[seo_variations]
+paths = []
 """
 
 ENV_TEMPLATE = """

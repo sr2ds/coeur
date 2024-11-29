@@ -34,6 +34,9 @@ class BuildSettings:
             else self.config["base_url"]
         )
 
+    def get_seo_variations_path(self):
+        return self.config.get("seo_variations", {}).get("paths", [])
+
     def get_templates(self):
         template_eng = Environment(loader=FileSystemLoader(searchpath=self.template_folder))
         template_eng.globals.update({**self.config})
