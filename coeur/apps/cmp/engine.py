@@ -76,12 +76,10 @@ class Engine:
     @staticmethod
     def build_post_path(content: Content, custom_path: str = None):
         if custom_path:
-            parts = custom_path.split("/")
-            slugs = [slugify(part) for part in parts if part]
-            path = "/".join(slugs)
-            if not path.endswith("/"):
-                path = f"{path}/"
-            return path
+            parts = custom_path.strip("/")
+            slugs = [slugify(part) for part in parts.split("/") if part]
+            path = f"/{'/'.join(slugs)}/"
+            return path.replace("//", "/")
 
         today = datetime.now()
         path_prefix = today.strftime("%Y/%m/%d")
