@@ -19,6 +19,9 @@ class BuildHandler:
     def __init__(self, max_posts: int = None):
         self.max_posts = max_posts
         self.settings = BuildSettings("./config.toml")
+        self.clean_and_copy_statics()
+
+    def clean_and_copy_statics(self):
         shutil.rmtree(self.settings.root_folder, ignore_errors=True)
         if os.path.exists(f"{self.settings.template_folder}/static"):
             shutil.copytree(
@@ -193,5 +196,6 @@ class ServerObserver:
         return observer
 
     def on_change(self, *args):
+        self.cls.clean_and_copy_statics()
         self.cls.handler()
         self.cls.settings.reload_templates()
