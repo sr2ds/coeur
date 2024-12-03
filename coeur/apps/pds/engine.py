@@ -24,10 +24,12 @@ class Engine:
         self,
         channels: list[Channels],
         total: int,
+        post_header: str = None,
         post_footer: str = None,
     ):
         self.channels = channels
         self.total = total
+        self.post_header = post_header
         self.post_footer = post_footer
 
         if not SOCIAL_DEFAULT_IMAGE_URL:
@@ -54,6 +56,9 @@ class Engine:
                     self.handle_content(post),
                     self.handle_img(post.image),
                     post.title,
+                    self.get_permalink(post),
+                    post_header=self.post_header,
+                    post_footer=self.post_footer,
                 )
                 extra = self.update_extra_attribute(channel, post, published_url)
                 db.session.execute(
@@ -63,6 +68,7 @@ class Engine:
                 db.session.commit()
                 print(post.uuid, post.db, post.title, published_url)
             except Exception as e:
+                print("Engine publish failed")
                 print(e)
                 db.session.rollback()
 
@@ -100,10 +106,10 @@ class Engine:
             print("handle_img", e)
 
     def handle_content(self, post) -> str:
-        maped_post = DatabaseManager.map_posts([post])[0]
+        permalink = self.get_permalink(post)
         text = post.title
         text += f"\n\n{self.extract_text_from_markdown(post.content)}"
-        text += f"\n\n{maped_post.permalink}"
+        text += f"\n\n{permalink}"
         if self.post_footer:
             text += f"\n\n{self.post_footer}"
         return text
@@ -119,3 +125,7 @@ class Engine:
         words = text.split()
         limited_text = " ".join(words[:word_limit])
         return f"{ limited_text } ..."
+
+    def get_permalink(self, post) -> str:
+        maped_post = DatabaseManager.map_posts([post])[0]
+        return maped_post.permalink
