@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "blog-coeur"
-version = "0.0.16"
+version = "0.0.17"
 description = "Coeur - static site management"
 authors = ["David Silva <srdavidsilva@gmail.com>"]
 readme = "README.md"
