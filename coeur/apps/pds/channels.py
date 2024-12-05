@@ -5,9 +5,7 @@ import os
 from coeur.apps.ssg.db import Post
 
 from dotenv import load_dotenv
-from instagrapi import Client as InstagramClient
-from instagrapi.exceptions import LoginRequired
-from atproto import Client as BlueskyClient, client_utils as bluesky_client_utils
+
 
 load_dotenv(dotenv_path="./.env")
 
@@ -34,9 +32,13 @@ class Instagram(ChannelAbstract):
     client = None
 
     def __init__(self):
+        print("aosoas")
         self.client = self._create_client()
 
-    def _create_client(self) -> InstagramClient:
+    def _create_client(self):
+        from instagrapi import Client as InstagramClient
+        from instagrapi.exceptions import LoginRequired
+
         client = InstagramClient(delay_range=[1, 3])
         username = os.getenv("INSTAGRAM_USERNAME")
         password = os.getenv("INSTAGRAM_PASSWORD")
@@ -117,7 +119,9 @@ class Bluesky(ChannelAbstract):
     def __init__(self):
         self.client = self._create_client()
 
-    def _create_client(self) -> InstagramClient:
+    def _create_client(self):
+        from atproto import Client as BlueskyClient
+
         client = BlueskyClient()
 
         username = os.getenv("BLUESKY_USERNAME")
@@ -140,17 +144,17 @@ class Bluesky(ChannelAbstract):
                 client.login(session_string=session)
                 login_via_session = True
             except Exception as e:
-                print("Couldn't login user using session information: %s" % e)
+                print("Couldn't login user using session information")
 
         if not login_via_session:
             try:
                 print("Attempting to login via username and password. username: %s" % username)
-                profile = client.login(username, password)
-                if profile:
-                    session_string = client.export_session_string()
-                    with open("bluesky-session.txt", "w") as f:
-                        f.write(session_string)
-                    login_via_pw = True
+                client = BlueskyClient()
+                client.login(username, password)
+                session_string = client.export_session_string()
+                with open("bluesky-session.txt", "w") as f:
+                    f.write(session_string)
+                login_via_pw = True
             except Exception as e:
                 print("Couldn't login user using username and password: %s" % e)
 
@@ -168,6 +172,8 @@ class Bluesky(ChannelAbstract):
         post_header,
         post_footer,
     ) -> dict:
+        from atproto import client_utils as bluesky_client_utils
+
         try:
             text = f"{post_header}\n{post_footer}\n"
             publish = self.client.send_post(
