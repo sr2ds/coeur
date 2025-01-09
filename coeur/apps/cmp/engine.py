@@ -29,12 +29,7 @@ class OpenAIEngine:
             raise ValueError("API key is missing or not set in the environment variables.")
         return OpenAI(api_key=api_key)
 
-    def generate_content(
-        self,
-        title,
-        custom_prompt: str = None,
-        model="gpt-3.5-turbo",
-    ):
+    def generate_content(self, title: str, model: str, custom_prompt: str = None):
         prompt = f"""
             Please return the content in HTML and only content about my requests, with no prefix.\n
             The content need to be optimized for SEO but is important NOT tell NOTHING about SEO in the content, like tags for seo or something like that.\n
@@ -59,6 +54,7 @@ class Engine:
     @staticmethod
     def title_to_post(
         title: str,
+        model: str,
         img_url: str = None,
         custom_prompt: str = None,
         custom_path: str = None,
@@ -68,7 +64,7 @@ class Engine:
         content = Content(
             title=title,
             img_url=img_url,
-            content=ai_engine.generate_content(title, custom_prompt=custom_prompt),
+            content=ai_engine.generate_content(title, model, custom_prompt=custom_prompt),
         )
 
         Engine.store_post(content, custom_path)
