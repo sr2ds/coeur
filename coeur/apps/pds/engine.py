@@ -54,9 +54,9 @@ class Engine:
             try:
                 published_url = channel_engine.publish(
                     self.handle_content(post),
-                    self.handle_img(post.image),
                     post.title,
                     self.get_permalink(post),
+                    image_path=(self.handle_img(post.image)),
                     post_header=self.post_header,
                     post_footer=self.post_footer,
                 )
@@ -66,10 +66,9 @@ class Engine:
                     {"extra": extra, "uuid": post.uuid},
                 )
                 db.session.commit()
-                print(post.uuid, post.db, post.title, published_url)
+                print(post.uuid, post.db, post.title)
             except Exception as e:
-                print("Engine publish failed")
-                print(e)
+                print("Engine publish failed:", e)
                 db.session.rollback()
 
         db.session.close()
@@ -90,7 +89,7 @@ class Engine:
             print("Error when try to handle the extra post json", post.title)
             return post.extra
 
-    def handle_img(self, image_url=None) -> str:
+    def handle_img(self, image_url=None) -> str | None:
         try:
             if not image_url:
                 image_url = SOCIAL_DEFAULT_IMAGE_URL
@@ -103,7 +102,7 @@ class Engine:
                 file.write(response.content)
             return local_path
         except Exception as e:
-            print("handle_img", e)
+            print("Engine handle_img failed:", e)
 
     def handle_content(self, post) -> str:
         permalink = self.get_permalink(post)

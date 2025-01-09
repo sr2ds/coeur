@@ -20,11 +20,11 @@ class ChannelAbstract(ABC):
     def publish(
         self,
         text,
-        image_path,
         title,
         link,
-        post_header,
-        post_footer,
+        image_path: str = None,
+        post_header: str = None,
+        post_footer: str = None,
     ): ...
 
 
@@ -32,7 +32,6 @@ class Instagram(ChannelAbstract):
     client = None
 
     def __init__(self):
-        print("aosoas")
         self.client = self._create_client()
 
     def _create_client(self):
@@ -88,13 +87,16 @@ class Instagram(ChannelAbstract):
     def publish(
         self,
         text,
-        image_path,
         title,
         link,
-        post_header,
-        post_footer,
+        image_path: str = None,
+        post_header: str = None,
+        post_footer: str = None,
     ) -> dict:
         try:
+            if not image_path:
+                raise ValueError("Image path is required for Instagram publish")
+
             publish = self.client.photo_upload(
                 image_path,
                 text,
@@ -106,8 +108,7 @@ class Instagram(ChannelAbstract):
             )
             return f"https://www.instagram.com/p/{publish.dict()['code']}"
         except Exception as e:
-            print("instagram publish failed")
-            print(e)
+            print("instagram publish failed:", e)
         finally:
             if os.path.exists(image_path):
                 os.remove(image_path)
@@ -166,11 +167,11 @@ class Bluesky(ChannelAbstract):
     def publish(
         self,
         text,
-        image_path,
         title,
         link,
-        post_header,
-        post_footer,
+        image_path: str = None,
+        post_header: str = None,
+        post_footer: str = None,
     ) -> dict:
         from atproto import client_utils as bluesky_client_utils
 
@@ -182,10 +183,9 @@ class Bluesky(ChannelAbstract):
             self.client.like(publish.uri, publish.cid)
             return publish.uri
         except Exception as e:
-            print("bluesky publish failed")
-            print(e)
+            print("bluesky publish failed:", e)
         finally:
-            if os.path.exists(image_path):
+            if image_path and os.path.exists(image_path):
                 os.remove(image_path)
 
 
