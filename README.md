@@ -46,13 +46,20 @@ blog-coeur ssg server --max-posts=1000 --port=8081
 
 #### Admin Web Panel
 
-Manage your blog’s posts through a simple web interface:
+Manage your blog’s posts through a web dashboard (static HTML + REST API):
 
 ```
 blog-coeur ssg admin
 ```
 
-Go to: `http://localhost:8000/admin`
+Go to: `http://localhost:8000/`
+
+**Admin module** — The admin is a single-page app served by the same process. It lets you:
+
+- **Search / list posts:** Choose a database (or "All"), then search by title or leave the search empty and click Search to list posts paginated. Results open in the left panel.
+- **Edit a post:** Click a result to load it. The main area shows two columns: editable fields (title, content, path, date, image) on the left and a live preview on the right. Content supports HTML or Markdown; Markdown is rendered in the preview.
+- **Rich editor:** Toolbar (bold, italic, headings, lists, link) for the content. Use "View source" to switch between WYSIWYG and raw HTML/Markdown; for Markdown posts, the source view shows Markdown.
+- **Update:** Click "Update post" to save changes. The API is REST (GET/PUT); the navbar link "API (Swagger)" opens the interactive docs at `/docs`.
 
 #### Build Static Site
 
@@ -79,7 +86,7 @@ blog-coeur ssg markdown-to-db "./content"
 - HTML Minification
 - Sitemap generation with pagination
 - Hot reload
-- Post management via SQLAlchemyAdmin dashboard (partial)
+- Admin dashboard: search/list posts, rich editor, view source (HTML/Markdown), update via REST API with Swagger at `/docs`
 
  ### TODO List
 
@@ -87,7 +94,6 @@ blog-coeur ssg markdown-to-db "./content"
     - [ ] Documentation about templates
 - [ ] Support to use post Tags
 - [ ] Hot reload v2 - add websocket to auto-refresh the html in the browser
-- [ ] Manage posts - fixes for multiple databases
 
 
 ## Module CMP - Content Machine Processor

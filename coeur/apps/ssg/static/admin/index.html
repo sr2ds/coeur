@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coeur SSG Admin</title>
+  <link rel="stylesheet" href="/static/admin.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/turndown/dist/turndown.min.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-group">
+      <label for="db-select">Database:</label>
+      <select id="db-select">
+        <option value="all">All</option>
+      </select>
+    </div>
+    <div class="nav-group">
+      <input type="text" id="search-input" placeholder="Search by title" />
+      <button type="button" id="search-btn">Search</button>
+    </div>
+    <button type="button" id="save-btn" class="primary" disabled>Update post</button>
+    <a href="/docs" target="_blank" rel="noopener" class="nav-link">API (Swagger)</a>
+  </nav>
+
+  <div id="message" class="message" aria-live="polite"></div>
+
+  <main class="main">
+    <aside id="results-panel" class="results-panel">
+      <h2>Results</h2>
+      <div id="results-list"></div>
+      <div id="pagination" class="pagination"></div>
+    </aside>
+
+    <section id="editor-section" class="editor-section" hidden>
+      <div class="two-cols">
+        <div class="col-editor">
+          <h2>Edit</h2>
+          <input type="hidden" id="post-uuid" />
+          <input type="hidden" id="post-db" />
+          <input type="hidden" id="post-content-format" />
+          <div class="field">
+            <label for="post-title">Title</label>
+            <input type="text" id="post-title" />
+          </div>
+          <div class="field field-content">
+            <label for="post-content">Content</label>
+            <span class="format-badge" id="format-badge"></span>
+            <button type="button" id="toggle-source-btn" class="toggle-source-btn" title="Toggle between editor and source code">View source</button>
+            <div id="content-editor-wrap" class="content-editor-wrap">
+              <div class="rich-editor-toolbar" role="toolbar">
+                <button type="button" data-cmd="bold" title="Bold">B</button>
+                <button type="button" data-cmd="italic" title="Italic">I</button>
+                <button type="button" data-cmd="underline" title="Underline">U</button>
+                <span class="toolbar-sep"></span>
+                <button type="button" data-cmd="formatBlock" data-arg="h2" title="Heading 2">H2</button>
+                <button type="button" data-cmd="formatBlock" data-arg="h3" title="Heading 3">H3</button>
+                <button type="button" data-cmd="formatBlock" data-arg="p" title="Paragraph">P</button>
+                <span class="toolbar-sep"></span>
+                <button type="button" data-cmd="insertUnorderedList" title="List">• List</button>
+                <button type="button" data-cmd="insertOrderedList" title="Numbered list">1. List</button>
+                <span class="toolbar-sep"></span>
+                <button type="button" data-cmd="createLink" title="Link">Link</button>
+              </div>
+              <div id="post-content" class="rich-editor-body" contenteditable="true"></div>
+            </div>
+            <textarea id="post-content-source" class="content-source" rows="20" spellcheck="false" placeholder="HTML source code"></textarea>
+          </div>
+          <div class="field">
+            <label for="post-path">Path</label>
+            <input type="text" id="post-path" />
+          </div>
+          <div class="field">
+            <label for="post-date">Date</label>
+            <input type="text" id="post-date" />
+          </div>
+          <div class="field">
+            <label for="post-image">Image URL</label>
+            <input type="text" id="post-image" />
+          </div>
+        </div>
+        <div class="col-preview">
+          <h2>Preview</h2>
+          <div id="preview" class="preview"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/admin.js"></script>
+</body>
+</html>

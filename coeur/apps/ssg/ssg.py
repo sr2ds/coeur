@@ -1,7 +1,7 @@
 from coeur.apps.ssg.build import BuildHandler
 from coeur.apps.ssg.markdown import MarkdownHandler
 from coeur.apps.ssg.bootstrap import CreateHandler, ExportTemplates
-from coeur.apps.ssg.admin import AdminPanel
+from coeur.apps.ssg.admin import AdminHandler
 
 import typer
 
@@ -39,6 +39,6 @@ def export_templates():
 
 
 @app.command()
-def admin():
+def admin(port: int = 8000, host: str = "127.0.0.1"):
     """Manage your posts using the web dashboard"""
-    AdminPanel.handler()
+    AdminHandler(host=host, port=port).handler()
